@@ -26,6 +26,12 @@ SUSPICIOUS_TLDS = {"zip", "mov", "xyz", "top", "tk", "ml", "ga", "cf", "gq", "cl
 
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "cutt.ly", "rebrand.ly"}
 
+URGENCY_WORDS = ["urgent", "immediately", "within 24 hours", "account suspended", "verify now",
+                 "dringend", "sofort", "innerhalb von 24 stunden", "gesperrt", "letzte mahnung"]
+
+CREDENTIAL_WORDS = ["password", "passwort", "pin", "tan", "login", "anmeldedaten",
+                    "credit card", "kreditkarte", "iban", "security code"]
+
 def registered_domain(host: str) -> str:
     """Return the last two labels of a host name (example.co.uk -> co.uk)."""
     # ponytail: naive, ignores multi-part suffixes like .co.uk; use the Public Suffix List if that matters
@@ -76,6 +82,21 @@ def analyze_url(url: str) -> list[Finding]:
         if re.search(rf"\b{brand}\b", host + parsed.path.lower()) and brand not in domain:
             findings.append(Finding(f"Mentions '{brand}' but the domain is '{domain}'", 30))
             break
+
+    return findings
+
+
+def analyze_email(text: str) -> list[Finding]:
+    lower = text.lower()
+    findings = []
+
+    urgent = [w for w in URGENCY_WORDS if w in lower]
+    if urgent:
+        findings.append(Finding(f"Creates time pressure ({', '.join(urgent)})", 15))
+
+    creds = [w for w in CREDENTIAL_WORDS if re.search(rf"\b{re.escape(w)}\b", lower)]
+    if creds:
+        findings.append(Finding(f"Asks for sensitive data ({', '.join(creds)})", 25))
 
     return findings
 
