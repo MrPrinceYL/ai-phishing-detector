@@ -1,2 +1,4 @@
+anthropic>=1.0
+pydantic>=2
 streamlit>=1.40
 pytest>=8
