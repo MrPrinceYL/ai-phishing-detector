@@ -1,20 +1,25 @@
-"""Streamlit front end: paste a URL, get a risk score and the reasons."""
+"""Streamlit front end: paste a URL or an e-mail, get a risk score and the reasons."""
 
 import streamlit as st
 
-from detector.heuristics import analyze_url, risk_level, risk_score
+from detector.heuristics import analyze_email, analyze_url, risk_level, risk_score
 
 st.set_page_config(page_title="AI Phishing Detector", page_icon="🎣")
 st.title("🎣 AI Phishing Detector")
-st.caption("Checks URLs for typical phishing signs. Nothing is stored.")
+st.caption("Checks URLs and e-mails for typical phishing signs. Nothing is stored.")
 
-content = st.text_input("URL", placeholder="https://paypal.secure-login.xyz/verify")
+mode = st.radio("What do you want to check?", ["URL", "E-mail text"], horizontal=True)
+if mode == "URL":
+    content = st.text_input("URL", placeholder="https://paypal.secure-login.xyz/verify")
+else:
+    content = st.text_area("E-mail text", height=220, placeholder="Paste the whole mail here ...")
 
 if st.button("Analyse", type="primary") and content.strip():
-    findings = analyze_url(content)
+    findings = analyze_url(content) if mode == "URL" else analyze_email(content)
     score = risk_score(findings)
     level = risk_level(score)
 
+    st.subheader("Rule-based check")
     show = {"low": st.success, "medium": st.warning, "high": st.error}[level]
     show(f"Risk score {score}/100 ({level})")
     st.progress(score / 100)
