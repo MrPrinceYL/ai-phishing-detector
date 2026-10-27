@@ -117,3 +117,9 @@ def risk_score(findings: list[Finding]) -> int:
     return min(100, sum(f.weight for f in findings))
 
 
+def risk_level(score: int) -> str:
+    if score >= 60:
+        return "high"
+    if score >= 30:
+        return "medium"
+    return "low"
