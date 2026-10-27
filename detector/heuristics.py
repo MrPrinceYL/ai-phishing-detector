@@ -17,10 +17,20 @@ class Finding:
     weight: int
 
 
+# Brands that are often impersonated in phishing mails.
+BRANDS = ["paypal", "apple", "microsoft", "amazon", "google", "netflix", "dhl",
+          "sparkasse", "volksbank", "postbank", "ing", "commerzbank", "ebay"]
+
 # TLDs that show up a lot in phishing campaigns (cheap or free to register).
 SUSPICIOUS_TLDS = {"zip", "mov", "xyz", "top", "tk", "ml", "ga", "cf", "gq", "click", "country", "kim"}
 
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "cutt.ly", "rebrand.ly"}
+
+def registered_domain(host: str) -> str:
+    """Return the last two labels of a host name (example.co.uk -> co.uk)."""
+    # ponytail: naive, ignores multi-part suffixes like .co.uk; use the Public Suffix List if that matters
+    return ".".join(host.split(".")[-2:])
+
 
 def analyze_url(url: str) -> list[Finding]:
     url = url.strip()
@@ -59,6 +69,13 @@ def analyze_url(url: str) -> list[Finding]:
 
     if len(url) > 100:
         findings.append(Finding("Very long URL", 5))
+
+    # A brand name somewhere in the URL, but the real domain belongs to someone else.
+    domain = registered_domain(host)
+    for brand in BRANDS:
+        if re.search(rf"\b{brand}\b", host + parsed.path.lower()) and brand not in domain:
+            findings.append(Finding(f"Mentions '{brand}' but the domain is '{domain}'", 30))
+            break
 
     return findings
 
