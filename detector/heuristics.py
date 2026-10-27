@@ -28,6 +28,15 @@ def analyze_url(url: str) -> list[Finding]:
     if parsed.scheme != "https":
         findings.append(Finding("No HTTPS: the connection is not encrypted", 10))
 
+    try:
+        ipaddress.ip_address(host)
+        findings.append(Finding("The link uses a raw IP address instead of a domain name", 25))
+    except ValueError:
+        pass
+
+    if "@" in parsed.netloc:
+        findings.append(Finding("'@' in the address: everything before it is ignored by the browser", 25))
+
     return findings
 
 
