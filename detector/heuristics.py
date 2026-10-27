@@ -17,6 +17,11 @@ class Finding:
     weight: int
 
 
+# TLDs that show up a lot in phishing campaigns (cheap or free to register).
+SUSPICIOUS_TLDS = {"zip", "mov", "xyz", "top", "tk", "ml", "ga", "cf", "gq", "click", "country", "kim"}
+
+SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "cutt.ly", "rebrand.ly"}
+
 def analyze_url(url: str) -> list[Finding]:
     url = url.strip()
     if "://" not in url:
@@ -42,6 +47,12 @@ def analyze_url(url: str) -> list[Finding]:
 
     if host.count(".") >= 4:
         findings.append(Finding("Unusually many subdomains", 10))
+
+    if host.rsplit(".", 1)[-1] in SUSPICIOUS_TLDS:
+        findings.append(Finding(f"Top-level domain '.{host.rsplit('.', 1)[-1]}' is common in phishing", 15))
+
+    if host in SHORTENERS:
+        findings.append(Finding("URL shortener hides the real destination", 15))
 
     return findings
 
