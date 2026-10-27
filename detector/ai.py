@@ -32,14 +32,19 @@ def is_configured() -> bool:
 
 
 def ai_check(content: str) -> AiVerdict:
-    """Ask Claude for a verdict."""
+    """Ask Claude for a verdict. Raises RuntimeError if Claude declines to answer."""
     client = anthropic.Anthropic()
-    response = client.messages.create(
+    response = client.beta.messages.create(
         model=MODEL,
         max_tokens=4000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": f"Check this for phishing:\n\n{content}"}],
         output_config={"format": {"type": "json_schema", "schema": AiVerdict.model_json_schema()}},
+        # If the request is declined by a safety classifier, let the API retry on a fallback model.
+        betas=["server-side-fallback-2026-07-01"],
+        fallbacks="default",
     )
+    if response.stop_reason == "refusal":
+        raise RuntimeError("Claude declined to analyse this content.")
     text = next(block.text for block in response.content if block.type == "text")
     return AiVerdict.model_validate_json(text)

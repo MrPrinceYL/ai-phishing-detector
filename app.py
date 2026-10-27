@@ -1,5 +1,6 @@
 """Streamlit front end: paste a URL or an e-mail, get a risk score and the reasons."""
 
+import anthropic
 import streamlit as st
 
 from detector import ai
@@ -35,9 +36,12 @@ if st.button("Analyse", type="primary") and content.strip():
 
     if use_ai:
         st.subheader("Claude's assessment")
-        with st.spinner("Asking Claude ..."):
-            verdict = ai.ai_check(content)
-        st.write(f"**Verdict:** {verdict.verdict} ({verdict.confidence}% confident)")
-        for reason in verdict.reasons:
-            st.write(f"- {reason}")
-        st.info(verdict.advice)
+        try:
+            with st.spinner("Asking Claude ..."):
+                verdict = ai.ai_check(content)
+            st.write(f"**Verdict:** {verdict.verdict} ({verdict.confidence}% confident)")
+            for reason in verdict.reasons:
+                st.write(f"- {reason}")
+            st.info(verdict.advice)
+        except (anthropic.APIError, RuntimeError) as e:
+            st.error(f"AI check failed: {e}")
