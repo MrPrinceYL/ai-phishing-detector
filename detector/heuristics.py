@@ -32,6 +32,11 @@ URGENCY_WORDS = ["urgent", "immediately", "within 24 hours", "account suspended"
 CREDENTIAL_WORDS = ["password", "passwort", "pin", "tan", "login", "anmeldedaten",
                     "credit card", "kreditkarte", "iban", "security code"]
 
+GENERIC_GREETINGS = ["dear customer", "dear user", "sehr geehrter kunde", "lieber kunde", "hallo nutzer"]
+
+URL_PATTERN = re.compile(r"https?://[^\s<>\"')]+", re.IGNORECASE)
+
+
 def registered_domain(host: str) -> str:
     """Return the last two labels of a host name (example.co.uk -> co.uk)."""
     # ponytail: naive, ignores multi-part suffixes like .co.uk; use the Public Suffix List if that matters
@@ -97,6 +102,13 @@ def analyze_email(text: str) -> list[Finding]:
     creds = [w for w in CREDENTIAL_WORDS if re.search(rf"\b{re.escape(w)}\b", lower)]
     if creds:
         findings.append(Finding(f"Asks for sensitive data ({', '.join(creds)})", 25))
+
+    if any(g in lower for g in GENERIC_GREETINGS):
+        findings.append(Finding("Generic greeting instead of your name", 10))
+
+    for url in URL_PATTERN.findall(text):
+        for f in analyze_url(url):
+            findings.append(Finding(f"Link {url}: {f.reason}", f.weight))
 
     return findings
 
