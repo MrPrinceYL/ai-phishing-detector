@@ -54,6 +54,12 @@ def analyze_url(url: str) -> list[Finding]:
     if host in SHORTENERS:
         findings.append(Finding("URL shortener hides the real destination", 15))
 
+    if host.count("-") >= 3:
+        findings.append(Finding("Many hyphens in the domain name", 10))
+
+    if len(url) > 100:
+        findings.append(Finding("Very long URL", 5))
+
     return findings
 
 
