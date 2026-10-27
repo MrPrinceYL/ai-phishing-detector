@@ -37,6 +37,12 @@ def analyze_url(url: str) -> list[Finding]:
     if "@" in parsed.netloc:
         findings.append(Finding("'@' in the address: everything before it is ignored by the browser", 25))
 
+    if host.startswith("xn--") or ".xn--" in host:
+        findings.append(Finding("Punycode domain: may imitate another domain with look-alike letters", 20))
+
+    if host.count(".") >= 4:
+        findings.append(Finding("Unusually many subdomains", 10))
+
     return findings
 
 
